@@ -33,7 +33,12 @@ class BatchedTransform extends stream.Transform {
 
       if (newBytes > byteLimit) {
         if (bytes > byteLimit) {
-          callback(new Error(`item too large: ${bytes} vs ${byteLimit}`));
+          if (this.listenerCount('overlimit') > 0) {
+            this.emit('overlimit', item);
+            callback();
+          } else {
+            callback(new Error(`item byte size ${bytes} over limit ${byteLimit}`));
+          }
           return;
         }
 

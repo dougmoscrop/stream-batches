@@ -47,6 +47,26 @@ test('throws when individual item is larger than byte limit', t => {
       .on('error', err => resolve(err))
     })
     .then(caught => {
-      t.deepEqual(caught.message, 'item too large: 4 vs 2');
+      t.deepEqual(caught.message, 'item byte size 4 over limit 2');
+    });
+});
+
+test('emits a overlimit event when individual item is larger than byte limit and a listener is attached', t => {
+  const onOverlimit = sinon.stub();
+  const onData = sinon.stub();
+
+  return new Promise((resolve, reject) => {
+    arrayStream(['a', 'asdf', 'b'])
+      .pipe(batches({ limit: { bytes: 2 } }))
+      .on('overlimit', onOverlimit)
+      .on('finish', () => resolve())
+      .on('data', onData)
+      .on('error', err => reject('should not have got error'))
+    })
+    .then(() => {
+      t.true(onOverlimit.calledOnce);
+      t.true(onData.calledOnce);
+      t.deepEqual(onOverlimit.firstCall.args[0], 'asdf');
+      t.deepEqual(onData.firstCall.args[0], ['a', 'b']);
     });
 });

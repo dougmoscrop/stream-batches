@@ -45,3 +45,14 @@ mySource
 ```
 
 This might be useful if you're sending a request that has a payload limit, and you want to factor in the overhead of JSON.stringify on the batched array.
+
+## Item Over Limit
+
+If an individual item is larger than the byte limit, the default behavior is to raise an error. You can override this by attaching a listener to the `overlimit` event:
+
+```js
+mySource.
+  .pipe(batches())
+  .on('overlimit', item => logger.warn('skipping an item because it is too big!', item)
+  .pipe(myDestination)
+```
