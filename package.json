@@ -1,0 +1,33 @@
+{
+  "name": "stream-batches",
+  "version": "1.0.0",
+  "description": "Yet another stream batching transformation",
+  "main": "stream-batches.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "nyc --all ava && nyc report --reporter=lcov"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dougmoscrop/stream-batched.git"
+  },
+  "keywords": [
+    "stream",
+    "batch",
+    "chunk",
+    "buffer"
+  ],
+  "author": "Doug Moscrop <doug.moscrop@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dougmoscrop/stream-batched/issues"
+  },
+  "homepage": "https://github.com/dougmoscrop/stream-batched#readme",
+  "devDependencies": {
+    "ava": "^0.22.0",
+    "nyc": "^11.2.1",
+    "sinon": "^4.0.1"
+  }
+}
