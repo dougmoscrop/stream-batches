@@ -13,6 +13,9 @@ class BatchedTransform extends stream.Transform {
   constructor(limit = defaultLimit, byteCount = defaultByteCount) {
     super({ objectMode: true });
 
+    this._readableState.highWaterMark = 1;
+    this._writableState.highWaterMark = 2;
+    
     this.byteLimit = limit.bytes;
     this.byteCount = byteCount;
     this.bytes = 0;
@@ -21,10 +24,18 @@ class BatchedTransform extends stream.Transform {
     this.items = [];
 
     this.timeLimit = limit.time;
-    this.timeout = this.startTimeout();
+
+    this.on('drain', () => {
+      if (this.timedout) {
+        this.flushBatch();
+      }
+      this.backpressure = false;
+    });
   }
 
   _transform(item, encoding, callback) {
+    let batch;
+
     const byteLimit = this.byteLimit;
 
     if (byteLimit) {
@@ -33,11 +44,21 @@ class BatchedTransform extends stream.Transform {
 
       if (newBytes > byteLimit) {
         if (bytes > byteLimit) {
-          callback(new Error(`item too large: ${bytes} vs ${byteLimit}`));
-          return;
+          return callback(new Error(`item too large: ${bytes} vs ${byteLimit}`));
         }
 
-        this.flushBatch();
+        const batch = this.getBatch();
+
+        this.items.push(item);
+        this.bytes = bytes;
+
+        return callback(null, batch);
+      } else if (newBytes === byteLimit) {
+        this.items.push(item);
+
+        const batch = this.getBatch();
+
+        return callback(null, batch);
       } else {
         this.bytes = newBytes;
       }
@@ -45,41 +66,34 @@ class BatchedTransform extends stream.Transform {
 
     this.items.push(item);
 
-    if (this.itemLimit) {
-      if (this.items.length === this.itemLimit) {
-        this.flushBatch();
-      }
+    if (this.itemLimit && (this.items.length === this.itemLimit)) {
+      const batch = this.getBatch();
+      return callback(null, batch);
+    }
+    
+    if (this.timeLimit) {
+      this.startTimeout();
     }
 
-    callback();
+    return callback();
   }
 
   _flush(callback) {
-    this.flushBatch(true);
-    callback();
+    this.flushBatch();
+    return callback();
   }
 
-  flushBatch(last) {
+  getBatch() {
     this.cancelTimeout();
+    this.timedout = false;
 
     if (this.items.length) {
-      this.push(this.items);
+      const batch = this.items;
+
       this.items = [];
       this.bytes = 0;
-    }
 
-    if (last) {
-      return;
-    }
-
-    this.timeout = this.startTimeout();
-  }
-
-  startTimeout() {
-    if (this.timeLimit) {
-      return setTimeout(() => {
-        this.flushBatch();
-      }, this.timeLimit);
+      return batch;
     }
   }
 
@@ -87,6 +101,32 @@ class BatchedTransform extends stream.Transform {
     if (this.timeout) {
       clearTimeout(this.timeout);
       delete this.timeout;
+    }
+  }
+
+  startTimeout() {
+    if (this.timeout) {
+      return;
+    }
+
+    this.timeout = setTimeout(() => {
+      delete this.timeout;
+
+      if (this.backpressure) {
+        this.timedout = true;
+      } else {
+        this.flushBatch();
+      }
+    }, this.timeLimit);
+  }
+
+  flushBatch() {
+    const batch = this.getBatch();
+
+    if (batch) {
+      if (this.push(batch) === false) {
+        this.backpressure = true;
+      }
     }
   }
 
