@@ -14,7 +14,7 @@ class BatchedTransform extends stream.Transform {
     super({ objectMode: true });
 
     this._readableState.highWaterMark = 1;
-    this._writableState.highWaterMark = 2; // limit.items || 16;
+    this._writableState.highWaterMark = 2;
     
     this.byteLimit = limit.bytes;
     this.byteCount = byteCount;
@@ -79,8 +79,8 @@ class BatchedTransform extends stream.Transform {
   }
 
   _flush(callback) {
-    const batch = this.getBatch();
-    return callback(null, batch);
+    this.flushBatch();
+    return callback();
   }
 
   getBatch() {
