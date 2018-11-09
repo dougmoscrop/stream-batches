@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dougmoscrop/stream-batched.git"
+    "url": "git+https://github.com/dougmoscrop/stream-batches.git"
   },
   "keywords": [
     "stream",
@@ -23,9 +23,9 @@
   "author": "Doug Moscrop <doug.moscrop@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/dougmoscrop/stream-batched/issues"
+    "url": "https://github.com/dougmoscrop/stream-batches/issues"
   },
-  "homepage": "https://github.com/dougmoscrop/stream-batched#readme",
+  "homepage": "https://github.com/dougmoscrop/stream-batches#readme",
   "devDependencies": {
     "ava": "^0.22.0",
     "chunk-brake": "0.0.4",
